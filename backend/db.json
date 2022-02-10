@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "task": "Write Hello World Program",
+        "summary": "Write the code using Python"
+    },
+    {
+        "id": 2,
+        "task": "Write simple program to read APIs",
+        "summary": "Write the code using Python"
+    }
+]
