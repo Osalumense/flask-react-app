@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
+import Axios from 'axios';
 import Notiflix from 'notiflix';
 
 function Login() {
@@ -19,40 +20,66 @@ function Login() {
       e.preventDefault()
       setFormErrors(validate(data))
       setIsSubmit(true)
-      const opts = {
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          "data": data,
-        })
-      }
-      if(Object.keys(formErrors).length === 0 && isSubmit) {
-        fetch('http://127.0.0.1:5000/login', opts)
-        .then(resp => {
-          if(resp.status === 200) {
-            Notiflix.Report.info(
-              'Success',
-              '<h1>' + resp.data.message + '</h1>',
-              'Okay',
-            );
-          }
-          else {
-            Notiflix.Report.info(
-              'Error',
-              '<h1> An error occurred </h1>',
-              'Error',
-            );
-          }
-          
-        })
-        .then()
-        .catch(error => {
-          console.error("There was an error!!", error)
-        })
-      }
+      Axios.post("http://127.0.0.1:5000/login", 
+            {
+              email: data.email,
+              password: data.password
+          })
+          .then(resp => {
+              if(resp.status === 200) {
+                console.log(resp.data)
+                Notiflix.Report.success(
+                  'Success',
+                  '<h1>' + resp.data.message + '</h1>',
+                  'Okay',
+                );
+              }
+              else {
+                Notiflix.Report.error(
+                  'Error',
+                  '<h1> An error occurred </h1>',
+                  'Error',
+                );
+              }
+          })
+          .catch(error => {
+            console.error("There was an error!!", error)
+          })
+      // const opts = {
+      //   method: 'POST',
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     "Access-Control-Allow-Origin": "*"
+      //   },
+      //   body: JSON.stringify({
+      //     "data": data,
+      //   })
+      // }
+      // if(Object.keys(formErrors).length === 0 && isSubmit) {
+      //   fetch('http://127.0.0.1:5000/login', opts)
+      //   .then(resp => {
+      //     if(resp.status === 200) {
+      //       Notiflix.Report.info(
+      //         'Success',
+      //         '<h1>' + resp.data.message + '</h1>',
+      //         'Okay',
+      //       );
+      //     }
+      //     else {
+      //       Notiflix.Report.info(
+      //         'Error',
+      //         '<h1> An error occurred </h1>',
+      //         'Error',
+      //       );
+      //     }          
+      //   })
+      //   .then()
+      //   .catch(error => {
+      //     console.error("There was an error!!", error)
+      //   })
+      // }
   }
+  
   const validate = (data) => {
   const errors = {}
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i
