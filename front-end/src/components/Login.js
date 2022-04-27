@@ -14,37 +14,53 @@ function Login() {
     const newdata = { ...data }
     newdata[e.target.id] = e.target.value 
     setData(newdata)
-    console.log(newdata)
+    // console.log(newdata)
 }
   const submit = (e) => {
       e.preventDefault()
       setFormErrors(validate(data))
-      setIsSubmit(true)
-      Axios.post("http://127.0.0.1:5000/login", 
-            {
+      if(Object.keys(formErrors).length === 0){
+        setIsSubmit(true)
+      }
+      if(Object.keys(formErrors).length === 0 && isSubmit) {
+        try {
+          Axios.post("http://127.0.0.1:5000/login", 
+          {
               email: data.email,
               password: data.password
           })
           .then(resp => {
+              console.log('Response:' + resp.data)
               if(resp.status === 200) {
-                console.log(resp.data)
                 Notiflix.Report.success(
                   'Success',
                   '<h1>' + resp.data.message + '</h1>',
-                  'Okay',
-                );
+                  'Okay'
+                )
               }
               else {
-                Notiflix.Report.error(
+                Notiflix.Report.failure(
                   'Error',
-                  '<h1> An error occurred </h1>',
-                  'Error',
-                );
+                  '<h1>' + resp.data.message + '</h1>',
+                  'Okay'
+                )
               }
           })
           .catch(error => {
             console.error("There was an error!!", error)
           })
+        } catch (err) {
+          if (err.response) {
+              console.log(err.response)
+          } else if (err.request) {
+              console.log(err.request)
+          } else {
+              console.log(err)
+          }          
+        }
+       
+      }
+      
       // const opts = {
       //   method: 'POST',
       //   headers: {
@@ -111,8 +127,8 @@ function Login() {
             <div className="w-full mx-auto px-20 flex-col items-center space-y-6">
               <h1 className="text-white font-bold text-4xl font-sans">Simple App</h1>
               <p className="text-white mt-1">The most popular peer to peer lending at SEA</p>
-              <div class="flex justify-center lg:justify-start mt-6">
-                  <Link class="hover:bg-indigo-700 hover:text-white hover:-translate-y-1 transition-all duration-500 bg-white text-indigo-800 mt-4 px-4 py-2 rounded-2xl font-bold mb-2" to="/">Get Started</Link>
+              <div className="flex justify-center lg:justify-start mt-6">
+                  <Link className="hover:bg-indigo-700 hover:text-white hover:-translate-y-1 transition-all duration-500 bg-white text-indigo-800 mt-4 px-4 py-2 rounded-2xl font-bold mb-2" to="/">Get Started</Link>
               </div>
             </div>
           </div>
@@ -123,21 +139,26 @@ function Login() {
               <p className="text-sm font-normal text-gray-600 mb-8">Welcome Back</p>
               <div className="flex items-center border-2 py-2 px-3 rounded-2xl">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                 </svg>
                 <input onChange={(e) => handle(e)} id="email" className="pl-2 w-full outline-none border-none" type="email" name="email" placeholder="Email Address" />
               </div>
               <p className="text-red-600 italic px-2 mt-2 mb-8">{formErrors.email}</p>
               <div className="flex items-center border-2 py-2 px-3 rounded-2xl ">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
                 <input onChange={(e) => handle(e)} className="pl-2 w-full outline-none border-none" type="password" name="password" id="password" placeholder="Password" />
                 
               </div>
               <p className="text-red-600 italic px-2 mt-2 mb-12">{formErrors.password}</p>
-              <button type="submit" className="block w-full bg-indigo-600 mt-4 py-2 rounded-2xl hover:bg-indigo-700 hover:-translate-y-1 transition-all duration-500 text-white font-semibold mb-2">Login</button>
-              <span className="text-sm ml-2 hover:text-blue-500 cursor-pointer">Forgot Password ?</span>
+              <button type="submit" className="block w-full bg-indigo-600 mt-5 py-2 rounded-2xl hover:bg-indigo-700 hover:-translate-y-1 transition-all duration-500 text-white font-semibold mb-2">Login</button>
+              <div className="flex justify-between mt-4">
+                <span className="text-sm ml-2 hover:text-blue-500 cursor-pointer hover:-translate-y-1 duration-500 transition-all">Forgot Password ?</span>
+
+                <Link className="text-sm ml-2 hover:text-blue-500 cursor-pointer hover:-translate-y-1 duration-500 transition-all" to="/register">Don't have an account yet?</Link>
+              </div>
+              
             </form>
             </div>
             

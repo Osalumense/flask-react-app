@@ -1,9 +1,11 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, make_response
+import pymysql
 # from model import db, add_to_db
-from flask import Flask
+from datetime import datetime
+from flask_login import UserMixin
 from flask_restful import Resource, Api, request, reqparse, abort
 from flask_mysqldb import MySQL
-# from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
@@ -11,6 +13,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 from werkzeug.security import check_password_hash
 from flask_bcrypt import Bcrypt
+
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -25,19 +28,39 @@ app.config['MYSQL_DB'] = 'test'
 
 mysql = MySQL(app)
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:''@localhost/flask-learn'
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:''@localhost:3306/test'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ECHO'] = True
 
-# db = SQLAlchemy(app)
-# class UserInfo(db.Model):
-#     id = db.Column(db.Integer, primary_key = True)
-#     username = db.Column(db.String(100), unique = True)
-#     password = db.Column(db.String(100))
+db = SQLAlchemy(app)
 
-#     def __init__(self, username, password):
-#         self.username = username
-#         self.password = password
+class User(UserMixin, db.Model):
+    __tablename__ = "user"
+    id              = db.Column(db.Integer, primary_key=True)
+    email           = db.Column(db.String(255), unique=True, nullable=False)
+    first_name      = db.Column(db.String(40), unique=False, nullable=True)
+    last_name       = db.Column(db.String(40), unique=False, nullable=True)
+    middle_name     = db.Column(db.String(40), unique=False, nullable=True)
+    password        = db.Column(db.String(255), unique=False, nullable=False)
+    remember_token  = db.Column(db.String(255), unique=False, nullable=True)
+    is_admin        = db.Column(db.Boolean, default=False)
+    dob             = db.Column(db.Date, unique=False)
+    mobile_number   = db.Column(db.String(15), unique=True, nullable=True)
+    created_at      = db.Column(db.DateTime, default=datetime.now)
+    updated_at      = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
+    def to_json(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'middle_name': self.middle_name,
+            'is_admin': self.is_admin,
+            'is_active': True,
+        }
+
+# db.create_all
 
 # task_post_args = reqparse.RequestParser()
 # task_post_args.add_argument("id", type=int, help="ID can't be empty", required=True)
@@ -88,35 +111,56 @@ mysql = MySQL(app)
 def show_home():
     return "Hello flask is here"
 
-@app.route('/<password>')
-def index(password):
-    bcrypt = Bcrypt()
-    # hashed_value = bcrypt.generate_password_hash(password).decode('utf-8')
-    # return hashed_value
-    stored_pwd = "$2b$12$TyLT6sLMdwZURSkmEa.ReuiBPTYdBE/v2LVSykpZpJvVoLgKSFzuS"
-    result = bcrypt.check_password_hash(stored_pwd, password)
-    return str(result)
-
-
-    # hashed_value = generate_password_hash(password)
-    # stored_pwd = "260000$HuOyEa3ChqIQ08pQ$e33aed16500c0e79b9dc0e5f0de00b3f70e6a8164669ef325acea77ff9b4b8bf"
+# @app.route('/<password>')
+# def index(password):
+#     bcrypt = Bcrypt()
+#     # hashed_value = bcrypt.generate_password_hash(password).decode('utf-8')
+#     # return hashed_value
+#     stored_pwd = "$2b$12$TyLT6sLMdwZURSkmEa.ReuiBPTYdBE/v2LVSykpZpJvVoLgKSFzuS"
+#     result = bcrypt.check_password_hash(stored_pwd, password)
+#     return str(result)
    
+
+@app.route("/register", methods=["POST"])
+@cross_origin()
+def register():
+    first_name = request.json.get("first_name", None)
+    last_name = request.json.get("last_name", None)
+    middle_name = request.json.get("middle_name", None)
+    mobile_number = request.json.get("mobile_number", None)
+    email = request.json.get("email", None)
+    dob = request.json.get("dob", None)
+    password = request.json.get("password", None)
+    hashed_password = Bcrypt().generate_password_hash(password).decode('utf-8')
+
+    user = User()
+    user.email = email
+    user.first_name = first_name
+    user.last_name = last_name
+    user.password = hashed_password
+    user.middle_name = middle_name
+    user.mobile_number = mobile_number
+    user.dob = dob
+
+    db.session.add(user)
+    db.session.commit()
+
+    response = jsonify({'message': 'User created successfully'})
+    
+    return response
+    
+
 
 @app.route("/login", methods=["POST"])
 @cross_origin()
 def login():
-    # return jsonify(data)
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-    bcrypt = Bcrypt()
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM users WHERE email = %s", [email])
-    record = cur.fetchone()
-    if bcrypt.check_password_hash(record.password, password): 
-        return jsonify(record)
-    return "Error"
-    # if email != "harkugbeosaz@gmail.com" or password != "password":
-    #     return jsonify({"msg": "Bad username or password"}), 401
+    user = User.query.filter_by(email=email).first()
 
-    # access_token = create_access_token(identity=email)
-    # return jsonify(access_token=access_token)
+    if user:
+        if Bcrypt().check_password_hash(user.password, password):
+            access_token = create_access_token(identity=email)
+            return make_response(jsonify({'message': 'Login successful', 'access_token': access_token, 'user': user.to_json()}))
+    
+    return make_response(jsonify({'message': 'Username or password not correct.'}), 401)
