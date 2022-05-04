@@ -109,7 +109,7 @@ function Register() {
                   </div>
             <div className="w-full mx-auto px-20 flex-col items-center space-y-6">
               <h1 className="text-white font-bold text-4xl font-sans">Simple App</h1>
-              <p className="text-white mt-1">The most popular peer to peer lending at SEA</p>
+              <p className="text-white mt-1">The most popular app</p>
               <div className="flex justify-center lg:justify-start mt-6">
                   <Link className="hover:bg-indigo-700 hover:text-white hover:-translate-y-1 transition-all duration-500 bg-white text-indigo-800 mt-4 px-4 py-2 rounded-2xl font-bold mb-2" to="/">Get Started</Link>
               </div>
